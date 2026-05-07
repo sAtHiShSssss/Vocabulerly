@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: vocabulerly
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm install && cd ../frontend && npm install && npm run build && cd ../backend && node seed.js
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: vocabulerly-data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1

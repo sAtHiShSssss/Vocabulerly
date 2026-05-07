@@ -1,0 +1,14 @@
+{
+  "name": "vocabulerly",
+  "version": "1.0.0",
+  "description": "English vocabulary learning app with flashcards, quizzes, and native language translations",
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "build": "cd frontend && npm install && npm run build",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "cd backend && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
