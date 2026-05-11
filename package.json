@@ -4,7 +4,7 @@
   "description": "English vocabulary learning app with flashcards, quizzes, and native language translations",
   "scripts": {
     "start": "cd backend && node server.js",
-    "build": "cd frontend && npm install && npm run build",
+    "build": "cd frontend && npm run build",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "dev": "cd backend && npm run dev",
     "vercel-install": "npm install --prefix backend && npm install --prefix frontend"
