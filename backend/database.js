@@ -2,12 +2,15 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const dataDir = path.join(__dirname, 'data');
+// Use /tmp in serverless (Vercel), otherwise use local data dir
+const isServerless = !!process.env.VERCEL;
+const dataDir = isServerless ? '/tmp' : path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
 const dbPath = path.join(dataDir, 'vocabulerly.db');
+const isNewDb = !fs.existsSync(dbPath);
 const db = new Database(dbPath);
 
 // Enable WAL mode for better performance
@@ -82,6 +85,34 @@ db.exec(`
 const streakRow = db.prepare('SELECT COUNT(*) as count FROM streaks').get();
 if (streakRow.count === 0) {
   db.prepare('INSERT INTO streaks (current_streak, longest_streak, daily_goal) VALUES (0, 0, 10)').run();
+}
+
+// Auto-seed words if database is empty (handles serverless cold starts)
+const wordCount = db.prepare('SELECT COUNT(*) as count FROM words').get();
+if (wordCount.count === 0) {
+  try {
+    const words1 = require('./data/words.json');
+    const words2 = require('./data/words_extra.json');
+    const allWords = [...words1, ...words2];
+    const seen = new Set();
+    const unique = [];
+    for (const w of allWords) {
+      const key = w.word.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); unique.push(w); }
+    }
+    const insert = db.prepare(
+      'INSERT OR IGNORE INTO words (word, meaning, part_of_speech, example, category, difficulty_level) VALUES (@word, @meaning, @part_of_speech, @example, @category, @difficulty_level)'
+    );
+    const seedAll = db.transaction((words) => {
+      for (const w of words) {
+        insert.run({ word: w.word, meaning: w.meaning, part_of_speech: w.part_of_speech || null, example: w.example, category: w.category, difficulty_level: w.difficulty_level || 2 });
+      }
+    });
+    seedAll(unique);
+    console.log(`Auto-seeded ${unique.length} words`);
+  } catch (e) {
+    console.error('Auto-seed failed:', e.message);
+  }
 }
 
 module.exports = db;
